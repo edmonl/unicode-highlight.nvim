@@ -118,7 +118,7 @@ require("unicode-highlight").setup({
 
 ##  Detected Characters
 
-This plugin detects Unicode characters based on data from [vscode-unicode-data](https://github.com/hediet/vscode-unicode-data). The character sets include:
+This plugin detects Unicode characters based on data from a vendored snapshot of [vscode-unicode-data](https://github.com/hediet/vscode-unicode-data) in `vscode-unicode-data/`. The character sets include:
 
 ### Ambiguous Characters
 Characters that visually resemble ASCII characters but have different Unicode code points:

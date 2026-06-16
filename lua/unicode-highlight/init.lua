@@ -1,4 +1,4 @@
--- init.lua (Neovim 0.10+)
+-- unicode-highlight.nvim (Neovim 0.10+)
 -- Byte-wise single-pass scanner using patterns from data.lua (byte arrays)
 -- Diagnostics + quickfix + virtual text
 -- Messages:
@@ -10,9 +10,9 @@ local M = {}
 -- data.lua must provide:
 --   M.ambiguous = { { {bytes}, {alt_bytes}, codepoint, alt_codepoint? }, ... }
 --   M.invisible = { { {bytes}, codepoint }, ... }
-local ok, data = pcall(require, "data")
+local ok, data = pcall(require, 'unicode-highlight.data')
 if not ok then
-  error("[unicode-highlight] Missing `data.lua`. Provide invisible/ambiguous byte tables.")
+  error('[unicode-highlight] Missing `unicode-highlight.data`. Provide invisible/ambiguous byte tables.')
 end
 
 -- ======================
@@ -322,29 +322,4 @@ function M.setup(user_config)
   end
 end
 
--- Optional auto-setup at load time
-local function auto_setup()
-  if config.auto_enable then
-    vim.diagnostic.config({
-      virtual_text = { prefix = config.virtual_text_prefix, format = vt_format },
-      underline = true,
-      signs = true,
-      update_in_insert = true,
-    }, ns_diag)
-
-    rebuild_patterns()
-    setup_autocmds()
-    setup_commands()
-    vim.defer_fn(function()
-      local ft = vim.bo.filetype
-      if should_highlight_filetype(ft) then
-        schedule_scan(0)
-      end
-    end, 80)
-  end
-end
-
-auto_setup()
-
 return M
-

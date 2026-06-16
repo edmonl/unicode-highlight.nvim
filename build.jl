@@ -2,7 +2,7 @@ using JSON
 using Printf
 
 const DATA_DIR = joinpath(@__DIR__, "vscode-unicode-data", "out")
-const OUTPUT_FILE = joinpath(@__DIR__, "lua", "data.lua")
+const OUTPUT_FILE = joinpath(@__DIR__, "lua", "unicode-highlight", "data.lua")
 
 
 utf8bytes(cp::Integer) = Int.(collect(codeunits(string(Char(cp)))))

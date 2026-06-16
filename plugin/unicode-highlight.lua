@@ -1,0 +1,1 @@
+require('unicode-highlight').setup()
