@@ -8,8 +8,6 @@ window.onload = async () => {
 	const canvas = document.getElementById("canvas");
 	const ctx = canvas.getContext("2d");
 
-	let w = 0;
-
 	var start = window.performance.now();
 
 	/**
@@ -29,13 +27,7 @@ window.onload = async () => {
 		console.log(character.codePointAt(0).toString(16), character, width);
 	}
 
-	let i = 0;
 	for (let c of allUnicodeCharacters()) {
-		i++;
-		/*if (i > 100) {
-			break;
-		}*/
-
 		ctx.textAlign = "start";
 		ctx.textBaseline = "top";
 		ctx.font = "30px serif";
@@ -53,7 +45,6 @@ window.onload = async () => {
 
 	var end = window.performance.now();
 	console.log(`Execution time: ${end - start} ms`);
-	console.log(w);
 };
 
 /**

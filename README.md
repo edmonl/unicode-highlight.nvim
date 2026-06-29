@@ -23,7 +23,18 @@ A Neovim plugin that highlights ambiguous and invisible Unicode characters, simi
 ```lua
 return {
   "racakenon/unicode-highlight.nvim",
+  opts = {},
 }
+```
+
+### Using [mini.deps](https://github.com/echasnovski/mini.deps)
+
+```lua
+MiniDeps.add({
+  source = "racakenon/unicode-highlight.nvim",
+})
+
+require("unicode-highlight").setup()
 ```
 
 ##  Configuration
@@ -31,19 +42,22 @@ return {
 ### Default Configuration
 
 ```lua
-require("unicode-highlight").setup({
-  highlight_ambiguous = true,           -- Highlight ambiguous Unicode characters
-  highlight_invisible = true,           -- Highlight invisible Unicode characters
-  ambiguous_hl = "@comment.warning",    -- Highlight group for ambiguous characters
-  invisible_hl = "@comment.error",      -- Highlight group for invisible characters
-  auto_enable = true,                   -- Automatically enable on startup
-  filetypes = {},                       -- Empty = all filetypes (whitelist)
-  excluded_filetypes = {                -- Blacklist of filetypes
-    "help", "qf", "terminal"
+return {
+  "racakenon/unicode-highlight.nvim",
+  opts = {
+    highlight_ambiguous = true,         -- Highlight ambiguous Unicode characters
+    highlight_invisible = true,         -- Highlight invisible Unicode characters
+    ambiguous_hl = "@comment.warning",  -- Highlight group for ambiguous characters
+    invisible_hl = "@comment.error",    -- Highlight group for invisible characters
+    auto_enable = true,                 -- Automatically enable on startup
+    filetypes = {},                     -- Empty = all filetypes (whitelist)
+    excluded_filetypes = {              -- Blacklist of filetypes
+      "help", "qf", "terminal"
+    },
+    debounce_ms = 35,                   -- Debounce time for text changes
+    virtual_text_prefix = "·",         -- Prefix for virtual text
   },
-  debounce_ms = 35,                     -- Debounce time for text changes
-  virtual_text_prefix = "·",           -- Prefix for virtual text
-})
+}
 ```
 
 ### Highlight Groups
@@ -75,7 +89,7 @@ require("unicode-highlight").setup({
 
 ### Basic Usage
 
-Once installed, the plugin automatically scans your buffers for problematic Unicode characters:
+Once loaded, the plugin automatically scans your buffers for problematic Unicode characters:
 
 - **Ambiguous characters** appear with a warning highlight and show messages like `U+2000 looks like ' '`
 - **Invisible characters** appear with an error highlight and show messages like `invisible U+007F detected`
@@ -155,6 +169,14 @@ The invisible-character snapshot is generated separately:
 cd tools/invisible-character-generator
 npm install
 npm run generate
+```
+
+With Bun:
+
+```sh
+cd tools/invisible-character-generator
+bun install
+bun ./script.js
 ```
 
 ## Acknowledgments

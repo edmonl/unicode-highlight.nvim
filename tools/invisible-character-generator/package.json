@@ -1,14 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "generate": "ts-node ./script.ts"
+    "generate": "node ./script.js"
   },
   "dependencies": {
-    "puppeteer": "^11.0.0",
-    "ts-node": "^10.4.0",
-    "typescript": "^4.5.4"
-  },
-  "devDependencies": {
-    "@types/node": "^16.11.7"
+    "puppeteer": "^11.0.0"
   }
 }

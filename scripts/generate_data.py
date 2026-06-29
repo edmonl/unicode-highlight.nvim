@@ -131,11 +131,12 @@ def ambiguous_characters(confusables: dict[int, int]) -> dict[int, int]:
 
 def invisible_characters() -> list[int]:
     data = json.loads(INVISIBLE_FILE.read_text(encoding='utf-8'))
-    return sorted({
-        int(entry['codePoint'])
-        for entry in data
-        if int(entry['codePoint']) not in EXCLUDED_INVISIBLE
-    })
+    result = set()
+    for entry in data:
+        codepoint = int(entry['codePoint'])
+        if codepoint not in EXCLUDED_INVISIBLE:
+            result.add(codepoint)
+    return sorted(result)
 
 
 def utf8_bytes(codepoint: int) -> list[int]:

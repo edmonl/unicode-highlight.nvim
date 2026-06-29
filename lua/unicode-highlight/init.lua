@@ -35,6 +35,7 @@ local config = {
 -- ======================
 local ns_hl   = vim.api.nvim_create_namespace("unicode_highlight")
 local ns_diag = vim.api.nvim_create_namespace("unicode_highlight_diag")
+local unpack = table.unpack or unpack
 
 -- patterns: array of { bytes_str, len, kind, hl, codepoint, alt_str? }
 -- index: first_byte (0-255) -> { pattern_indices... }
@@ -43,6 +44,7 @@ local index_by_first = nil
 
 local scheduled = {}          -- bufnr -> bool (debounce flag)
 local vt_enabled = true       -- virtual text on/off state
+local setup_done = false
 
 -- ======================
 -- Utilities
@@ -80,21 +82,22 @@ end
 local function vt_format(d)
   local ud = d.user_data or {}
   if ud.kind == "ambiguous" and ud.codepoint and ud.alt then
-    return ("U+%04X looks like '%s'"):format(ud.codepoint, ud.alt)
+    return message_of(ud.kind, ud.codepoint, ud.alt)
   elseif ud.kind == "invisible" and ud.codepoint then
-    return ("invisible U+%04X detected"):format(ud.codepoint)
+    return message_of(ud.kind, ud.codepoint, ud.alt)
   end
   return d.message
 end
 
--- Convert an array of bytes {b1,b2,...} to a Lua string WITHOUT unpack dependency
+-- Convert an array of bytes {b1,b2,...} to a Lua string.
 local function bytes_to_string(bytes)
   if not bytes or #bytes == 0 then return "" end
-  local tmp = {}
-  for i = 1, #bytes do
-    tmp[i] = string.char(bytes[i])
-  end
-  return table.concat(tmp)
+  return string.char(unpack(bytes))
+end
+
+local function clear_buffer(bufnr)
+  vim.api.nvim_buf_clear_namespace(bufnr, ns_hl, 0, -1)
+  vim.diagnostic.reset(ns_diag, bufnr)
 end
 
 -- ======================
@@ -126,7 +129,7 @@ local function rebuild_patterns()
     arr[#arr + 1] = #p
   end
 
-  if config.highlight_invisible and type(data.invisible) == "table" then
+  if config.highlight_invisible then
     for _, item in ipairs(data.invisible) do
       local bytes = item[1]     -- {bytes}
       local cp    = item[2]     -- integer codepoint
@@ -134,7 +137,7 @@ local function rebuild_patterns()
     end
   end
 
-  if config.highlight_ambiguous and type(data.ambiguous) == "table" then
+  if config.highlight_ambiguous then
     for _, item in ipairs(data.ambiguous) do
       local bytes     = item[1] -- {bytes}
       local alt_bytes = item[2] -- {alt_bytes}
@@ -152,8 +155,7 @@ end
 -- ======================
 local function scan_and_apply(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  vim.api.nvim_buf_clear_namespace(bufnr, ns_hl, 0, -1)
-  vim.diagnostic.reset(ns_diag, bufnr)
+  clear_buffer(bufnr)
 
   if not patterns then rebuild_patterns() end
   if not patterns or #patterns == 0 then return end
@@ -233,13 +235,11 @@ local function setup_commands()
   vim.api.nvim_create_user_command("UnicodeHighlightEnable", function()
     rebuild_patterns()
     schedule_scan(0)
-  end, { desc = "Enable unicode highlighting for current buffer" })
+  end, { desc = "Enable unicode highlighting for current buffer", force = true })
 
   vim.api.nvim_create_user_command("UnicodeHighlightDisable", function()
-    local b = vim.api.nvim_get_current_buf()
-    vim.api.nvim_buf_clear_namespace(b, ns_hl, 0, -1)
-    vim.diagnostic.reset(ns_diag, b)
-  end, { desc = "Disable unicode highlighting for current buffer" })
+    clear_buffer(vim.api.nvim_get_current_buf())
+  end, { desc = "Disable unicode highlighting for current buffer", force = true })
 
   vim.api.nvim_create_user_command("UnicodeHighlightToggle", function()
     config.highlight_ambiguous = not config.highlight_ambiguous
@@ -248,22 +248,20 @@ local function setup_commands()
     if config.highlight_ambiguous or config.highlight_invisible then
       schedule_scan(0)
     else
-      local b = vim.api.nvim_get_current_buf()
-      vim.api.nvim_buf_clear_namespace(b, ns_hl, 0, -1)
-      vim.diagnostic.reset(ns_diag, b)
+      clear_buffer(vim.api.nvim_get_current_buf())
     end
-  end, { desc = "Toggle ambiguous/invisible scanning" })
+  end, { desc = "Toggle ambiguous/invisible scanning", force = true })
 
   vim.api.nvim_create_user_command("UnicodeHighlightQF", function()
     vim.diagnostic.setqflist({ open = true })
-  end, { desc = "Send diagnostics to quickfix and open it" })
+  end, { desc = "Send diagnostics to quickfix and open it", force = true })
 
   vim.api.nvim_create_user_command("UnicodeHighlightVTextToggle", function()
     vt_enabled = not vt_enabled
     local vt_opt = vt_enabled and { prefix = config.virtual_text_prefix, format = vt_format } or false
     vim.diagnostic.config({ virtual_text = vt_opt }, ns_diag)
     schedule_scan(0)
-  end, { desc = "Toggle virtual text for unicode-highlight diagnostics" })
+  end, { desc = "Toggle virtual text for unicode-highlight diagnostics", force = true })
 end
 
 -- ======================
@@ -297,6 +295,8 @@ end
 -- Public API
 -- ======================
 function M.setup(user_config)
+  setup_done = true
+
   if user_config then
     config = vim.tbl_deep_extend("force", config, user_config)
   end
@@ -314,6 +314,7 @@ function M.setup(user_config)
 
   if config.auto_enable then
     vim.defer_fn(function()
+      if not config.auto_enable then return end
       local ft = vim.bo.filetype
       if should_highlight_filetype(ft) then
         schedule_scan(0)
@@ -321,5 +322,11 @@ function M.setup(user_config)
     end, 80)
   end
 end
+
+vim.schedule(function()
+  if not setup_done then
+    M.setup()
+  end
+end)
 
 return M
