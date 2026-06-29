@@ -118,7 +118,7 @@ require("unicode-highlight").setup({
 
 ##  Detected Characters
 
-This plugin detects Unicode characters based on data from a vendored snapshot of [vscode-unicode-data](https://github.com/hediet/vscode-unicode-data) in `vscode-unicode-data/`. The character sets include:
+This plugin detects Unicode characters from generated data in `lua/unicode-highlight/data.lua`. The generator downloads pinned Unicode security confusables data and combines it with the generated invisible-character snapshot in `tools/invisible-character-generator/out/invisible-characters.json`.
 
 ### Ambiguous Characters
 Characters that visually resemble ASCII characters but have different Unicode code points:
@@ -137,6 +137,26 @@ Characters with no visible representation:
 
 - Neovim 0.10+ (uses diagnostic user_data and modern APIs)
 
+##  Data Generation
+
+Generate the runtime Lua data with:
+
+```sh
+python3 scripts/generate_data.py
+```
+
+The script downloads `https://www.unicode.org/Public/security/16.0.0/confusables.txt` into `cache/confusables-16.0.0.txt` when needed, applies `data/confusable-overrides.json`, reads `tools/invisible-character-generator/out/invisible-characters.json`, and writes `lua/unicode-highlight/data.lua`.
+
+Use `--offline` to require the cached confusables file, or `--refresh` to force a fresh download.
+
+The invisible-character snapshot is generated separately:
+
+```sh
+cd tools/invisible-character-generator
+npm install
+npm run generate
+```
+
 ## Acknowledgments
 
-- Character data sourced from [hediet/vscode-unicode-data](https://github.com/hediet/vscode-unicode-data)
+- Confusable character data sourced from the Unicode security data files.
